@@ -4,6 +4,20 @@
 }
 
 .Router {
-	background-color: lightblue;
+	background-color: #e1e16a;
 	border-style: outset;
+}
+
+.PageBottom {
+	font-size: 10px;
+}
+
+.List {
+	border: groove;
+	border-width: 10px;
+	background-color: #cfbfaf;
+}
+
+.AboutPage {
+	text-align: left;
 }

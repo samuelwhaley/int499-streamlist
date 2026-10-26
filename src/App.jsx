@@ -10,44 +10,140 @@ import About from './About';
 import Movies from './Movies';
 import Cart from './Cart';
 
-/* home page functions */
+function StreamList() {
+  const [input, setInput] = useState("");
+  const [items, setItems] = useState([]);
 
-const ListForm = () => {
-	const [value, setValue] = useState("");
-	
-	const handleSubmit = (e) => {
-		e.preventDefault();
-		console.log(value);
-	}
-	
-	return (
-		<form className='ListForm' onSubmit={handleSubmit}>
-			<input 
-				type='text' 
-				className='ListInput' 
-				value={value} 
-				placeholder='Enter movie name....' 
-				onChange={(e) => setValue(e.target.value)}
-				/>
-			<button type='submit' className='ListButton'>Add Movie</button>
-		</form>
-	)
-}
+  function handleSubmit(e) {
+    e.preventDefault();
 
-const ListContainer = () => {
-	return (
-		<div className='ListContainer'>
-			<br></br>
+    const value = input.trim();
+    if (!value) return;
+
+    setItems((currentItems) => [
+      ...currentItems,
+      {
+        id: Math.random(),
+        text: value,
+      },
+    ]);
+
+    setInput(" ");
+    console.log(value);
+  }
+
+  function handleRemove(id) {
+    setItems((currentItems) =>
+      currentItems.filter((item) => item.id !== id)
+    );
+  }
+
+  function handleEdit(id, newText) {
+    const value = newText.trim();
+    if (!value) return;
+    setItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === id ? { ...item, text: value } : item
+      )
+    );
+    setEditingId(null);
+  }
+
+  function handleStartEdit(id, currentText) {
+    setEditingId(id);
+    setEditText(currentText);
+  }
+
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState("");
+
+  return (
+    <section className="MainList">
+      <div>
+        <br></br>
 			<img src="https://i.imgur.com/1ht5GIs.png"></img>
 			<h1>StreamList</h1>
 			<h2>Your personalized streaming list. Start here:</h2>
-			<ListForm />
-		</div>
-	)
+
+        <form className="MainForm" onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Enter movie or show title..."
+            maxLength={200}
+          />
+
+          <button type="submit">Add to List</button>
+        </form>
+        <br></br>
+      </div>
+
+      <section className="List">
+        <div>
+          <h2>Your List</h2>
+          <span className="Counter">
+            {items.length} {items.length === 1 ? "item" : "items"}
+          </span>
+        </div>
+
+        <ul className="ListItems">
+            {items.map((item) => (
+              <li key={item.id} className="Item">
+
+                {editingId === item.id ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleEdit(item.id, editText);
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      maxLength={200}
+                    />
+                    <button type="submit" className="save-button">Save</button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                ) : (
+                  <span className="ItemTitle">{item.text}</span>
+                )}
+
+                {editingId !== item.id && (
+                  <button
+                    type="button"
+                    onClick={() => handleStartEdit(item.id, item.text)}
+                  >
+                    Edit
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => handleRemove(item.id)}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+          <br></br>
+      </section>
+      <p className='PageBottom'>(C) 2026 EZTechMovie. All rights reserved.</p>
+    </section>
+   
+  );
 }
 
 
-/* home page main app */
+/* router */
 
 function App() {
 	return (
@@ -63,7 +159,7 @@ function App() {
 				</nav>
 				
 				<Routes>
-					<Route path="/" element={<ListContainer />} />
+					<Route path="/" element={<StreamList />} />
 					<Route path="/movies" element={<Movies />} />
 					<Route path="/cart" element={<Cart />} />
 					<Route path="/about" element={<About />} />
