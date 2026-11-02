@@ -1,18 +1,35 @@
-import React from 'react';
-import { useState } from 'react';
+﻿import React from 'react';
+import { useState, useEffect } from 'react';
 import {
 	BrowserRouter as Router,
 	Routes,
 	Route,
 	Link
 } from 'react-router-dom';
+import { useStateContext } from '../context/stateContext';
 import About from './About';
 import Movies from './Movies';
 import Cart from './Cart';
 
+/* main streamlist function */
+
 function StreamList() {
   const [input, setInput] = useState("");
-  const [items, setItems] = useState([]);
+
+  /* look for localstorage */
+
+  const [items, setItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem("MoviesInList");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("MoviesInList", JSON.stringify(items));
+  }, [items]);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -32,13 +49,13 @@ function StreamList() {
     console.log(value);
   }
 
-  function handleRemove(id) {
+  function removeItem(id) {
     setItems((currentItems) =>
       currentItems.filter((item) => item.id !== id)
     );
   }
 
-  function handleEdit(id, newText) {
+  function editItem(id, newText) {
     const value = newText.trim();
     if (!value) return;
     setItems((currentItems) =>
@@ -46,15 +63,15 @@ function StreamList() {
         item.id === id ? { ...item, text: value } : item
       )
     );
-    setEditingId(null);
+    setEditId(null);
   }
 
   function handleStartEdit(id, currentText) {
-    setEditingId(id);
+    setEditId(id);
     setEditText(currentText);
   }
 
-  const [editingId, setEditingId] = useState(null);
+  const [editId, setEditId] = useState(null);
   const [editText, setEditText] = useState("");
 
   return (
@@ -91,11 +108,11 @@ function StreamList() {
             {items.map((item) => (
               <li key={item.id} className="Item">
 
-                {editingId === item.id ? (
+                {editId === item.id ? (
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
-                      handleEdit(item.id, editText);
+                      editItem(item.id, editText);
                     }}
                   >
                     <input
@@ -107,7 +124,7 @@ function StreamList() {
                     <button type="submit" className="save-button">Save</button>
                     <button
                       type="button"
-                      onClick={() => setEditingId(null)}
+                      onClick={() => setEditId(null)}
                     >
                       Cancel
                     </button>
@@ -116,7 +133,7 @@ function StreamList() {
                   <span className="ItemTitle">{item.text}</span>
                 )}
 
-                {editingId !== item.id && (
+                {editId !== item.id && (
                   <button
                     type="button"
                     onClick={() => handleStartEdit(item.id, item.text)}
@@ -127,7 +144,7 @@ function StreamList() {
 
                 <button
                   type="button"
-                  onClick={() => handleRemove(item.id)}
+                  onClick={() => removeItem(item.id)}
                 >
                   Remove
                 </button>
@@ -146,6 +163,8 @@ function StreamList() {
 /* router */
 
 function App() {
+	const { cartItemCount } = useStateContext();
+
 	return (
 		<div className='App'>
 		
@@ -154,7 +173,7 @@ function App() {
 				<nav className='Router'>
 					<Link to="/">Home</Link>|  
 					<Link to="/movies">Movies</Link>|  
-					<Link to="/cart">Cart</Link>|  
+					<Link to="/cart">Cart ({cartItemCount}) </Link>|
 					<Link to="/about">About </Link>
 				</nav>
 				

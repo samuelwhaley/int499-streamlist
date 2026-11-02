@@ -6,6 +6,7 @@
 .Router {
 	background-color: #e1e16a;
 	border-style: outset;
+	margin: auto;
 }
 
 .PageBottom {
@@ -16,8 +17,31 @@
 	border: groove;
 	border-width: 10px;
 	background-color: #cfbfaf;
+	width: 800px;
+	margin: auto;
 }
 
 .AboutPage {
 	text-align: left;
+}
+
+.ShopItems {
+	background-color: lightblue;
+	border-style: groove;
+	width: 800px;
+	margin: auto;
+}
+
+.CartItems {
+	background-color: lightgoldenrodyellow;
+	border-style: groove;
+	width: 800px;
+	margin: auto;
+}
+
+.TMDBList {
+	background-color: lightblue;
+	border-style: groove;
+	width: 800px;
+	margin: auto;
 }
