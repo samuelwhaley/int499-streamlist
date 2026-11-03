@@ -69,7 +69,7 @@ const Movies = () => {
           {results.map(({ id, title, movie }) => (
             <li key={id} className="MovieResult">
               {movie ? (
-                <a href={'https://www.themoviedb.org/movie/${movie.id}'}>
+                <a href={`https://www.themoviedb.org/movie/${movie.id}`}>
                   {movie.title}
                 </a>
               ) : (
