@@ -1,78 +1,87 @@
-import React from 'react'
-import list from './data.js'
-import { useStateContext } from '../context/stateContext'
+import React from 'react';
+import list from './data.js';
+import { useStateContext } from './stateContext';
 
 const Cart = () => {
-	const fromData = list
-	const { cart, setCart } = useStateContext()
+	const { cart, setCart } = useStateContext();
 
-	const dataItems = fromData.filter(
+	const dataItems = list.filter(
 		(item) => !cart.some((cartItem) => cartItem.id === item.id)
-	)
+	);
 
-	const subOrNot = (item) =>
-		item.service.toLowerCase().includes('subscription')
+	const isSubscription = (item) =>
+		item.service.toLowerCase().includes('subscription');
+
+	const remainingStock = (item) => {
+		const original = list.find((listItem) => listItem.id === item.id);
+		return original ? original.amount : 0;
+	};
 
 	const addToCart = (item) => {
-		if (subOrNot(item) && cart.some((cartItem) => subOrNot(cartItem))) {
-			return
+		if (isSubscription(item) && cart.some((cartItem) => isSubscription(cartItem))) {
+			return;
 		}
-		setCart([...cart, { ...item, quantity: 1 }])
-	}
+		setCart((currentCart) => [...currentCart, { ...item, quantity: 1 }]);
+	};
 
 	const removeItem = (id) => {
-		setCart(cart.filter((item) => item.id !== id))
-	}
+		setCart((currentCart) => currentCart.filter((item) => item.id !== id));
+	};
 
 	const quantSet = (id, amount) => {
-		setCart(
-			cart.map((item) => {
-				if (item.id !== id) return item
-				if (subOrNot(item)) return { ...item, quantity: 1 }
-				return { ...item, quantity: Math.max(1, item.quantity + amount) }
+		setCart((currentCart) =>
+			currentCart.map((item) => {
+				if (item.id !== id) return item;
+				if (isSubscription(item)) return { ...item, quantity: 1 };
+				const nextQuantity = item.quantity + amount;
+				if (nextQuantity < 1) return item;
+				if (nextQuantity > remainingStock(item)) return item;
+				return { ...item, quantity: nextQuantity };
 			})
-		)
-	}
+		);
+	};
 
 	const totalPrice = cart.reduce(
-		(sum, item) => sum + item.price * item.quantity, 0)
+		(sum, item) => sum + item.price * item.quantity, 0);
 
-	const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0)
+	const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
 	return (
 		<div>
 			<h2>Items</h2>
-				<ul className='ShopItems'>
-					{dataItems.map((item) => (
-						<li key={item.id} onClick={() => addToCart(item)}>
-							<img
-								src={item.img}
-								style={{ width: 60, height: 60 }}
-							/>
+			<ul className="ShopItems">
+				{dataItems.map((item) => (
+					<li key={item.id} className="ShopItem">
+						<button
+							className="AddToCartButton"
+							onClick={() => addToCart(item)}
+							disabled={isSubscription(item) && cart.some((cartItem) => isSubscription(cartItem))}
+						>
+							<img src={item.img} alt={item.service} style={{ width: 60, height: 60 }} />
 							{item.service} ({item.serviceInfo}) - ${item.price}
-						</li>
-					))}
-				</ul>
-			
+						</button>
+					</li>
+				))}
+			</ul>
 
 			<h2>Cart</h2>
-				<ul className='CartItems'>
-					{cart.map((item) => (
-						<li key={item.id}>
-							{item.service} - ${item.price} x {item.quantity} = $
-							{(item.price * item.quantity)}
-							<button onClick={() => quantSet(item.id, -1)}>-</button>
-							<button onClick={() => quantSet(item.id, 1)}>+</button>
-							<button onClick={() => removeItem(item.id)}>Remove</button>
-						</li>
-					))}
-				</ul>
+			<ul className="CartItems">
+				{cart.map((item) => (
+					<li key={item.id}>
+						{item.service} - ${item.price} x {item.quantity} = $
+						{(item.price * item.quantity).toFixed(2)}
+						<button onClick={() => quantSet(item.id, -1)} disabled={isSubscription(item)}>-</button>
+						<button onClick={() => quantSet(item.id, 1)} disabled={item.quantity >= remainingStock(item)}>+</button>
+						<button onClick={() => removeItem(item.id)}>Remove</button>
+					</li>
+				))}
+			</ul>
 			<h3>
 				Items in cart: {cartItemCount} | Total: ${totalPrice.toFixed(2)}
 			</h3>
-			<button>Checkout</button>
+			<button disabled={cart.length === 0}>Checkout</button>
 		</div>
-	)
-}
+	);
+};
 
-export default Cart
+export default Cart;

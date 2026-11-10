@@ -1,12 +1,12 @@
-﻿import React from 'react';
-import { useState, useEffect } from 'react';
+import React from 'react';
+import { useState } from 'react';
 import {
 	BrowserRouter as Router,
 	Routes,
 	Route,
 	Link
 } from 'react-router-dom';
-import { useStateContext } from '../context/stateContext';
+import { useStateContext } from './stateContext';
 import About from './About';
 import Movies from './Movies';
 import Cart from './Cart';
@@ -14,149 +14,129 @@ import Cart from './Cart';
 /* main streamlist function */
 
 function StreamList() {
-  const [input, setInput] = useState("");
+	const { items, setItems } = useStateContext();
 
-  /* look for localstorage */
+	const [input, setInput] = useState('');
+	const [editId, setEditId] = useState(null);
+	const [editText, setEditText] = useState('');
 
-  const [items, setItems] = useState(() => {
-    try {
-      const saved = localStorage.getItem("MoviesInList");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+	function handleSubmit(e) {
+		e.preventDefault();
 
-  useEffect(() => {
-    localStorage.setItem("MoviesInList", JSON.stringify(items));
-  }, [items]);
+		const value = input.trim();
+		if (!value) return;
 
-  function handleSubmit(e) {
-    e.preventDefault();
+		setItems((currentItems) => [
+			...currentItems,
+			{
+				id: crypto.randomUUID(),
+				text: value,
+			},
+		]);
 
-    const value = input.trim();
-    if (!value) return;
+		setInput('');
+	}
 
-    setItems((currentItems) => [
-      ...currentItems,
-      {
-        id: Math.random(),
-        text: value,
-      },
-    ]);
+	function removeItem(id) {
+		setItems((currentItems) =>
+			currentItems.filter((item) => item.id !== id)
+		);
+	}
 
-    setInput(" ");
-    console.log(value);
-  }
+	function editItem(id, newText) {
+		const value = newText.trim();
+		if (!value) return;
+		setItems((currentItems) =>
+			currentItems.map((item) =>
+				item.id === id ? { ...item, text: value } : item
+			)
+		);
+		setEditId(null);
+	}
 
-  function removeItem(id) {
-    setItems((currentItems) =>
-      currentItems.filter((item) => item.id !== id)
-    );
-  }
+	function handleStartEdit(id, currentText) {
+		setEditId(id);
+		setEditText(currentText);
+	}
 
-  function editItem(id, newText) {
-    const value = newText.trim();
-    if (!value) return;
-    setItems((currentItems) =>
-      currentItems.map((item) =>
-        item.id === id ? { ...item, text: value } : item
-      )
-    );
-    setEditId(null);
-  }
+	return (
+		<section className="MainList">
+			<div>
+				<img src="https://i.imgur.com/1ht5GIs.png" alt="StreamList logo" />
+				<h1>StreamList</h1>
+				<h2>Your personalized streaming list. Start here:</h2>
 
-  function handleStartEdit(id, currentText) {
-    setEditId(id);
-    setEditText(currentText);
-  }
+				<form className="MainForm" onSubmit={handleSubmit}>
+					<input
+						type="text"
+						value={input}
+						onChange={(e) => setInput(e.target.value)}
+						placeholder="Enter movie or show title..."
+						maxLength={200}
+					/>
 
-  const [editId, setEditId] = useState(null);
-  const [editText, setEditText] = useState("");
+					<button type="submit">Add to List</button>
+				</form>
+			</div>
 
-  return (
-    <section className="MainList">
-      <div>
-        <br></br>
-			<img src="https://i.imgur.com/1ht5GIs.png"></img>
-			<h1>StreamList</h1>
-			<h2>Your personalized streaming list. Start here:</h2>
+			<section className="List">
+				<div>
+					<h2>Your List</h2>
+					<span className="Counter">
+						{items.length} {items.length === 1 ? 'item' : 'items'}
+					</span>
+				</div>
 
-        <form className="MainForm" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Enter movie or show title..."
-            maxLength={200}
-          />
+				<ul className="ListItems">
+					{items.map((item) => (
+						<li key={item.id} className="Item">
+							{editId === item.id ? (
+								<form
+									onSubmit={(e) => {
+										e.preventDefault();
+										editItem(item.id, editText);
+									}}
+								>
+									<input
+										type="text"
+										value={editText}
+										onChange={(e) => setEditText(e.target.value)}
+										maxLength={200}
+									/>
+									<button type="submit" className="save-button">Save</button>
+									<button
+										type="button"
+										onClick={() => setEditId(null)}
+									>
+										Cancel
+									</button>
+								</form>
+							) : (
+								<span className="ItemTitle">{item.text}</span>
+							)}
 
-          <button type="submit">Add to List</button>
-        </form>
-        <br></br>
-      </div>
+							{editId !== item.id && (
+								<button
+									type="button"
+									onClick={() => handleStartEdit(item.id, item.text)}
+								>
+									Edit
+								</button>
+							)}
 
-      <section className="List">
-        <div>
-          <h2>Your List</h2>
-          <span className="Counter">
-            {items.length} {items.length === 1 ? "item" : "items"}
-          </span>
-        </div>
-
-        <ul className="ListItems">
-            {items.map((item) => (
-              <li key={item.id} className="Item">
-
-                {editId === item.id ? (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      editItem(item.id, editText);
-                    }}
-                  >
-                    <input
-                      type="text"
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      maxLength={200}
-                    />
-                    <button type="submit" className="save-button">Save</button>
-                    <button
-                      type="button"
-                      onClick={() => setEditId(null)}
-                    >
-                      Cancel
-                    </button>
-                  </form>
-                ) : (
-                  <span className="ItemTitle">{item.text}</span>
-                )}
-
-                {editId !== item.id && (
-                  <button
-                    type="button"
-                    onClick={() => handleStartEdit(item.id, item.text)}
-                  >
-                    Edit
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.id)}
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-          <br></br>
-      </section>
-      <p className='PageBottom'>(C) 2026 EZTechMovie. All rights reserved.</p>
-    </section>
-   
-  );
+							<button
+								type="button"
+								onClick={() => removeItem(item.id)}
+							>
+								Remove
+							</button>
+						</li>
+					))}
+				</ul>
+			</section>
+			<p className="PageBottom">(C) 2026 EZTechMovie. All rights reserved.</p>
+		</section>
+	);
 }
 
 
@@ -166,28 +146,26 @@ function App() {
 	const { cartItemCount } = useStateContext();
 
 	return (
-		<div className='App'>
-		
-		<Router>
-			<div>
-				<nav className='Router'>
-					<Link to="/">Home</Link>|  
-					<Link to="/movies">Movies</Link>|  
-					<Link to="/cart">Cart ({cartItemCount}) </Link>|
-					<Link to="/about">About </Link>
-				</nav>
-				
-				<Routes>
-					<Route path="/" element={<StreamList />} />
-					<Route path="/movies" element={<Movies />} />
-					<Route path="/cart" element={<Cart />} />
-					<Route path="/about" element={<About />} />
-				</Routes>
-			</div>
-		</Router>
-		
+		<div className="App">
+			<Router>
+				<div>
+					<nav className="Router">
+						<Link to="/">Home</Link>|
+						<Link to="/movies">Movies</Link>|
+						<Link to="/cart">Cart ({cartItemCount}) </Link>|
+						<Link to="/about">About </Link>
+					</nav>
+
+					<Routes>
+						<Route path="/" element={<StreamList />} />
+						<Route path="/movies" element={<Movies />} />
+						<Route path="/cart" element={<Cart />} />
+						<Route path="/about" element={<About />} />
+					</Routes>
+				</div>
+			</Router>
 		</div>
-  );
+	);
 }
 
-export default App
+export default App;

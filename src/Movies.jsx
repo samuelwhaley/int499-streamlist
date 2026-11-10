@@ -1,86 +1,89 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useStateContext } from './stateContext';
 
-const TMDB_API_KEY = '0b3ef0ded205ac1508d2edb2047e96ec';
-const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-const STREAMLIST_KEY = 'MoviesInList';
+const STREAMLIST_KEY_CONTEXT = 'StreamListContext';
 
 const Movies = () => {
-  const [results, setResults] = useState([]);
+	const { apiUrl, apiKey, items } = useStateContext();
+	const [results, setResults] = useState([]);
+	const [isLoading, setIsLoading] = useState(false);
 
-  const searchMovie = async (title) => {
-    const url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}`;
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        console.error(`TMDB request failed for "${title}" (${response.status})`);
-        return null;
-      }
-      const data = await response.json();
-      return data.results && data.results.length > 0 ? data.results[0] : null;
-    } catch (err) {
-      console.error(`TMDB search failed for "${title}":`, err);
-      return null;
-    }
-  };
+	const searchMovie = async (title) => {
+		const url = `${apiUrl}/search/movie?api_key=${apiKey}&query=${encodeURIComponent(title)}`;
+		try {
+			const response = await fetch(url);
+			if (!response.ok) {
+				console.error(`TMDB request failed for "${title}" (${response.status})`);
+				return null;
+			}
+			const data = await response.json();
+			return data.results && data.results.length > 0 ? data.results[0] : null;
+		} catch (err) {
+			console.error(`TMDB search failed for "${title}":`, err);
+			return null;
+		}
+	};
 
-  useEffect(() => {
-    let cancelled = false;
+	useEffect(() => {
+		let cancelled = false;
 
-    const fetchResults = async () => {
-      let items = [];
-      try {
-        const saved = localStorage.getItem(STREAMLIST_KEY);
-        items = saved ? JSON.parse(saved) : [];
-      } catch {
-        items = [];
-      }
+		const fetchResults = async () => {
+			if (items.length === 0) {
+				if (!cancelled) {
+					setResults([]);
+					setIsLoading(false);
+				}
+				return;
+			}
 
-      if (items.length === 0) {
-        if (!cancelled) {
-          setResults([]);
-        }
-        return;
-      }
+			if (!cancelled) {
+				setIsLoading(true);
+			}
 
-      const found = await Promise.all(
-        items.map(async (item) => {
-          const movie = await searchMovie(item.text);
-          return { id: item.id, title: item.text, movie };
-        })
-      );
+			const found = await Promise.all(
+				items.map(async (item) => {
+					const movie = await searchMovie(item.text);
+					return { id: item.id, title: item.text, movie };
+				})
+			);
 
-      if (!cancelled) {
-        setResults(found);
-      }
-    };
+			if (!cancelled) {
+				setResults(found);
+				setIsLoading(false);
+			}
+		};
 
-    fetchResults();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+		fetchResults();
+		return () => {
+			cancelled = true;
+		};
+	}, [items]);
 
-  return (
-    <div>
-      <p></p>
-      <h2>Currently in your StreamList:</h2>
-        <ul className="TMDBList">
-          {results.map(({ id, title, movie }) => (
-            <li key={id} className="MovieResult">
-              {movie ? (
-                <a href={`https://www.themoviedb.org/movie/${movie.id}`}>
-                  {movie.title}
-                </a>
-              ) : (
-                <span>Not found in TMDB!</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      
-    </div>
-  );
+	return (
+		<div>
+			<p></p>
+			<h2>Currently in your StreamList:</h2>
+			{isLoading ? (
+				<p>Searching TMDB for your titles...</p>
+			) : items.length === 0 ? (
+				<p>Your list is empty — head back to the home page and add some titles!</p>
+			) : (
+				<ul className="TMDBList">
+					{results.map(({ id, title, movie }) => (
+						<li key={id} className="MovieResult">
+							{movie ? (
+								<a href={`https://www.themoviedb.org/movie/${movie.id}`}>
+									{movie.title}
+								</a>
+							) : (
+								<span>{title} — Not found in TMDB</span>
+							)}
+						</li>
+					))}
+				</ul>
+			)}
+		</div>
+	);
 };
 
-export default Movies
+export default Movies;
