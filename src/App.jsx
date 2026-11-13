@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
 	BrowserRouter as Router,
 	Routes,
@@ -7,6 +7,7 @@ import {
 	Link
 } from 'react-router-dom';
 import { useStateContext } from './stateContext';
+import { canInstall, promptInstall } from './pwa';
 import About from './About';
 import Movies from './Movies';
 import Cart from './Cart';
@@ -19,6 +20,14 @@ function StreamList() {
 	const [input, setInput] = useState('');
 	const [editId, setEditId] = useState(null);
 	const [editText, setEditText] = useState('');
+	const [installable, setInstallable] = useState(canInstall());
+
+	useEffect(() => {
+		if (canInstall()) return;
+		const onInstallable = () => setInstallable(true);
+		window.addEventListener('pwa-installable', onInstallable);
+		return () => window.removeEventListener('pwa-installable', onInstallable);
+	}, []);
 
 	function handleSubmit(e) {
 		e.preventDefault();
@@ -65,6 +74,12 @@ function StreamList() {
 				<img src="https://i.imgur.com/1ht5GIs.png" alt="StreamList logo" />
 				<h1>StreamList</h1>
 				<h2>Your personalized streaming list. Start here:</h2>
+
+				{installable && (
+					<button type="button" className="InstallButton" onClick={promptInstall}>
+						Install App
+					</button>
+				)}
 
 				<form className="MainForm" onSubmit={handleSubmit}>
 					<input
