@@ -80,6 +80,8 @@ const Cart = () => {
 				Items in cart: {cartItemCount} | Total: ${totalPrice.toFixed(2)}
 			</h3>
 			<button disabled={cart.length === 0}>Checkout</button>
+			<br></br>
+			<p className='PageBottom'>(C) 2026 EZTechMovie. All rights reserved.</p>
 		</div>
 	);
 };

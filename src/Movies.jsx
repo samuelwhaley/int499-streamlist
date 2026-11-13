@@ -72,9 +72,21 @@ const Movies = () => {
 					{results.map(({ id, title, movie }) => (
 						<li key={id} className="MovieResult">
 							{movie ? (
-								<a href={`https://www.themoviedb.org/movie/${movie.id}`}>
-									{movie.title}
-								</a>
+								<>
+									<a href={`https://www.themoviedb.org/movie/${movie.id}`}>
+										{movie.poster_path ? (
+											<img
+												src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+												alt={`${movie.title} poster`}
+											/>
+										) : (
+											<span>No poster available</span>
+										)}
+									</a>
+									<a href={`https://www.themoviedb.org/movie/${movie.id}`}>
+										{movie.title}
+									</a>
+								</>
 							) : (
 								<span>{title} — Not found in TMDB</span>
 							)}
@@ -82,8 +94,11 @@ const Movies = () => {
 					))}
 				</ul>
 			)}
+			<br></br>
+			<p className='PageBottom'>(C) 2026 EZTechMovie. All rights reserved.</p>
 		</div>
 	);
 };
+
 
 export default Movies;
